@@ -4,6 +4,7 @@ using System.Collections;
 public class Util : MonoBehaviour {
 
 	public const float PANEL_HEIGHT = 0.125f;
+	public const int FRAME_RATE = 60;
 
 	// Use this for initialization
 	public struct BubbleColor {
@@ -12,10 +13,10 @@ public class Util : MonoBehaviour {
 		static public Color BLUE = new Color(0.2f, 0.6f, 1.0f);
 		static public Color PURPLE = new Color(0.8f, 0.3f, 0.8f);
 
-		public static Color getRandom()
+		public static Color getRandom(int total)
 		{
 			Color[] colors = { RED, GREEN, BLUE, PURPLE };
-			return colors[Random.Range(0, 4)];
+			return colors[Random.Range(0, total)];
 		}
 	};
 

@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using System.Collections;
-using SimpleJSON;
 
 public class GameplayScene : MonoBehaviour {
 
@@ -12,7 +11,7 @@ public class GameplayScene : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		Application.targetFrameRate = 60;
+		Application.targetFrameRate = Util.FRAME_RATE;
 		//Screen.SetResolution (640, 960, false);
 		transform.position = new Vector3 (0, 0, 0);
 		screen_size = Util.GameAreaSize ();
@@ -52,12 +51,6 @@ public class GameplayScene : MonoBehaviour {
 		screen_size.x -= left_wall.renderer.bounds.size.x * 2;
 	}
 
-	void loadStage(int stage_num)
-	{
-		string json_data = Resources.Load<TextAsset> ("stages/stage_" + stage_num.ToString () + ".json").text;
-		JSONNode json = JSONNode.Parse (json_data);
-	}
-	
 	// Update is called once per frame
 	void Update () {
 		counter++;

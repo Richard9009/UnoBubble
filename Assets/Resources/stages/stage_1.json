@@ -1,0 +1,10 @@
+{
+	"size" : 7,
+	"colors" : 3,
+	"max_num" : 6,
+	"speed" : 5,
+	"interval" : 0.5,
+	"bubbles" : 60,
+	"goal" : 2000,
+	"missions" : [ ]
+}

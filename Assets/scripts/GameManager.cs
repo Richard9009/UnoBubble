@@ -1,9 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
+using SimpleJSON;
 
 public class GameManager {
 
 	// Use this for initialization
+	public static int stage_num = 1;
 	private static GameManager instance = null;
 
 	private GameObject current_bubble = null;
@@ -31,11 +33,14 @@ public class GameManager {
 
 	public struct StageData
 	{
-		int size;
-		int gravity;
-		int colors;
-		MissionData[] missions;
-		int total_bubbles;
+		public float size;
+		public float gravity;
+		public int colors;
+		public int max_num;
+		public int goal;
+		public int interval;
+		public MissionData[] missions;
+		public int total_bubbles;
 	};
 
 	public GameManager()
@@ -43,7 +48,8 @@ public class GameManager {
 		float diameter = Util.FullscreenSize ().y * Util.PANEL_HEIGHT;
 		active_pos = new Vector3 (-Util.GameAreaSize ().x / 2 + diameter/2,
 		                               -Util.GameAreaSize ().y / 2 - diameter / 2, -5);
-		Debug.Log (active_pos.ToString());
+		loadStage ();
+		remaining_bubbles = stage_data.total_bubbles;
 	}
 
 	public static GameManager getInstance()
@@ -56,6 +62,19 @@ public class GameManager {
 	public static void DestroyInstance()
 	{
 		instance = null;
+	}
+
+	void loadStage()
+	{
+		string json_data = (Resources.Load("stages/stage_" + stage_num.ToString ()) as TextAsset).text;
+		JSONNode json = JSONNode.Parse (json_data);
+		stage_data.size = json ["size"].AsInt * 0.11f + 0.5f;
+		stage_data.colors = json ["colors"].AsInt;
+		stage_data.max_num = json ["max_num"].AsInt;
+		stage_data.goal = json ["goal"].AsInt;
+		stage_data.gravity = json ["speed"].AsInt * 0.01f;
+		stage_data.interval = Mathf.FloorToInt(json ["interval"].AsFloat * Util.FRAME_RATE);
+		stage_data.total_bubbles = json ["bubbles"].AsInt;
 	}
 
 	public void setAsActiveBubble(GameObject bubble)
@@ -112,7 +131,8 @@ public class GameManager {
 	{
 		get{
 			GameObject bubble = new GameObject();
-			(bubble.AddComponent(typeof(BubbleBase)) as BubbleBase).Init(Util.BubbleColor.getRandom(), Random.Range(0, 10), 1.5f, 0.01f);
+			(bubble.AddComponent(typeof(BubbleBase)) as BubbleBase).Init(Util.BubbleColor.getRandom(stage_data.colors), 
+			                                 Random.Range(0, stage_data.max_num), stage_data.size, stage_data.gravity);
 			remaining_bubbles--;
 			return bubble;
 		}
