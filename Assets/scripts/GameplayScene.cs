@@ -1,15 +1,19 @@
 ﻿using UnityEngine;
 using System.Collections;
+using SimpleJSON;
 
 public class GameplayScene : MonoBehaviour {
 
-	int interval = 100;
-	int counter = 0;
-	Vector2 screen_size;
+	private int interval = 50;
+	private int counter = 0;
+	private Vector2 screen_size;
+	private TextObject score_text;
+	private TextObject remaining_bubbles_text;
+
 	// Use this for initialization
 	void Start () {
-		//Application.targetFrameRate = 60;
-		Screen.SetResolution (640, 960, false);
+		Application.targetFrameRate = 60;
+		//Screen.SetResolution (640, 960, false);
 		transform.position = new Vector3 (0, 0, 0);
 		screen_size = Util.GameAreaSize ();
 		transform.localScale = new Vector3(screen_size.x / renderer.bounds.size.x, screen_size.y / renderer.bounds.size.y, 1);
@@ -34,17 +38,37 @@ public class GameplayScene : MonoBehaviour {
 		bottom_panel.transform.localScale = new Vector3 (fullscreen_size.x / original_size.x, Util.PANEL_HEIGHT * fullscreen_size.y / original_size.y, 1);
 		bottom_panel.transform.position = new Vector3 (0, -fullscreen_size.y / 2 + original_size.y / 2 * bottom_panel.transform.localScale.y, -2);
 
+		GameObject score_object = new GameObject ();
+		score_text = score_object.AddComponent (typeof(TextObject)) as TextObject;
+		score_text.init ("0", "Eras Bold ITC", 50, Color.white);
+		score_object.transform.position = new Vector3 (-screen_size.x / 2 + 0.2f, top_panel.transform.position.y + 0.3f, -3);
+
+		GameObject remaining_bubbles_object = new GameObject ();
+		remaining_bubbles_text = remaining_bubbles_object.AddComponent (typeof(TextObject)) as TextObject;
+		remaining_bubbles_text.init (GameManager.getInstance().RemainingBubbles.ToString(), "Eras Bold ITC", 50, Color.white);
+		remaining_bubbles_text.setAlignment (TextAlignment.Center);
+		remaining_bubbles_object.transform.position = new Vector3 (0, top_panel.transform.position.y + 0.3f, -3);
+
 		screen_size.x -= left_wall.renderer.bounds.size.x * 2;
+	}
+
+	void loadStage(int stage_num)
+	{
+		string json_data = Resources.Load<TextAsset> ("stages/stage_" + stage_num.ToString () + ".json").text;
+		JSONNode json = JSONNode.Parse (json_data);
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		counter++;
-		if (counter == interval) {
+		GameManager gm = GameManager.getInstance ();
+		score_text.setText (gm.TotalScore.ToString());
+		if (counter == interval && gm.RemainingBubbles > 0) {
 			counter = 0;
-			GameObject bubble = new GameObject();
-			(bubble.AddComponent(typeof(BubbleBase)) as BubbleBase).Init(Util.BubbleColor.getRandom(), Random.Range(0, 10), 1.5f, 0.01f);
-			bubble.transform.position = new Vector3(Random.Range(-screen_size.x/2, screen_size.x/2), Util.FullscreenSize().y * 0.75f,-1.0f);
+			gm.NewBubble.transform.position = new Vector3(Random.Range(-screen_size.x/2, screen_size.x/2), Util.FullscreenSize().y * 0.75f,-1.0f);
+			remaining_bubbles_text.setText(gm.RemainingBubbles.ToString());
 		}
 	}
 }
+
+

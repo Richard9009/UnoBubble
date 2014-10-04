@@ -4,18 +4,17 @@ using System.Collections;
 public class Util : MonoBehaviour {
 
 	public const float PANEL_HEIGHT = 0.125f;
-	public const bool ON_MOBILE = false;
 
 	// Use this for initialization
 	public struct BubbleColor {
 		static public Color RED = new Color(1.0f, 0.5f, 0.5f);
 		static public Color GREEN = new Color(0.2f, 0.8f, 0.2f);
 		static public Color BLUE = new Color(0.2f, 0.6f, 1.0f);
-		static public Color YELLOW = new Color(0.8f, 0.8f, 0.0f);
+		static public Color PURPLE = new Color(0.8f, 0.3f, 0.8f);
 
 		public static Color getRandom()
 		{
-			Color[] colors = { RED, GREEN, BLUE, YELLOW };
+			Color[] colors = { RED, GREEN, BLUE, PURPLE };
 			return colors[Random.Range(0, 4)];
 		}
 	};

@@ -23,6 +23,11 @@ public class TextObject : MonoBehaviour
 		gameObject.transform.position = new Vector2(-gameObject.renderer.bounds.size.x / 2, gameObject.renderer.bounds.size.y / 2);
 	}
 
+	public void setAlignment(TextAlignment hAlignment)
+	{
+		mesh.alignment = hAlignment;
+	}
+
 	public void setText(string text)
 	{
 		mesh.text = text;

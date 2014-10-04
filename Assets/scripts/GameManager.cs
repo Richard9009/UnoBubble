@@ -1,15 +1,50 @@
 ﻿using UnityEngine;
 using System.Collections;
-using Holoville.HOTween;
 
 public class GameManager {
 
 	// Use this for initialization
 	private static GameManager instance = null;
 
-	public int current_num = -1;
-	public Color current_col = Color.white;
-	public int combo_count = 1;
+	private GameObject current_bubble = null;
+	private int current_num = -1;
+	private Color current_col = Color.white;
+	private int combo_count = 0;
+
+	private int total_score = 0;
+	public int TotalScore { get { return total_score; } }
+
+	private int remaining_bubbles = 50;
+	public int RemainingBubbles { get { return remaining_bubbles; } }
+
+	private Vector3 active_pos = new Vector3();
+	public Vector3 ActiveBubblePos { get { return active_pos; } }
+
+	private StageData stage_data = new StageData();
+	public StageData CurrentStageData { get { return stage_data; } }
+
+	public struct MissionData
+	{
+		string target;
+		int amount;
+	};
+
+	public struct StageData
+	{
+		int size;
+		int gravity;
+		int colors;
+		MissionData[] missions;
+		int total_bubbles;
+	};
+
+	public GameManager()
+	{
+		float diameter = Util.FullscreenSize ().y * Util.PANEL_HEIGHT;
+		active_pos = new Vector3 (-Util.GameAreaSize ().x / 2 + diameter/2,
+		                               -Util.GameAreaSize ().y / 2 - diameter / 2, -5);
+		Debug.Log (active_pos.ToString());
+	}
 
 	public static GameManager getInstance()
 	{
@@ -25,30 +60,62 @@ public class GameManager {
 
 	public void setAsActiveBubble(GameObject bubble)
 	{
-		float diameter = Util.FullscreenSize ().y * Util.PANEL_HEIGHT;
-		Vector3 end_pos = new Vector3 (-Util.GameAreaSize ().x / 2 + diameter/2,
-		                              -Util.GameAreaSize ().y / 2 - diameter / 2, -5);
-		Vector3 anchor_pos = new Vector3 (bubble.transform.position.x - 1.5f, bubble.transform.position.y + 1.5f, -5);
+		if (current_bubble != null)
+			(current_bubble.GetComponent("BubbleBase") as BubbleBase).ReleaseAnimation();
 
-		float scale = diameter / bubble.renderer.bounds.size.y * bubble.transform.localScale.y;
-		bubble.transform.localScale = new Vector3 (scale, scale, 1);
-		HOTween.To(bubble.transform, 0.2f, new TweenParms().Prop("position", anchor_pos).Ease(EaseType.EaseOutQuad).
-		           											Prop("rotation",new Vector3()));
+		current_bubble = bubble;
+	}
 
-		HOTween.To (bubble.transform, 0.3f, new TweenParms ().Prop ("position", end_pos).Ease (EaseType.EaseInOutQuad).Delay (0.1f));
-			
-		GameObject prev_active = GameObject.Find ("active_bubble");
-		if (prev_active) {
-			HOTween.To (prev_active.transform, 0.5f, new TweenParms ().Prop ("position", 
-    	    			new Vector3 (prev_active.transform.position.x, prev_active.transform.position.y - 5.0f, -4)).
-            			Ease (EaseType.EaseInCubic).Delay (0.2f));
-			prev_active.name = "prev_bubble";
-			MonoBehaviour.Destroy(prev_active, 0.5f);
+	public Vector3 GetActiveBubblePos()
+	{
+		return active_pos;
+	}
+
+	public void ReleaseBubble()
+	{
+		current_col = Color.white;
+		current_num = -1;
+		combo_count = 0;
+
+		if (current_bubble != null)
+			(current_bubble.GetComponent("BubbleBase") as BubbleBase).ReleaseAnimation();
+	}
+
+	public bool IsValidBubble(Color col, int num)
+	{
+		bool match = current_col == Color.white || current_num == -1;
+		if(!match) match = current_col ==  col || current_num == num;
+
+		if (match) {
+			if(current_col == col && current_num == num) 
+				combo_count *= 2; //super match, double score
+			else combo_count++;
+
+			current_col = col;
+			current_num = num;
+		} else
+			combo_count = 0;
+
+		return match;
+	}
+
+	public int Score
+	{
+		get {
+			int score = combo_count * 100;
+			total_score += score;
+			return score;
 		}
+	}
 
-		bubble.name = "active_bubble";  
-		combo_count++;
-		
+	public GameObject NewBubble
+	{
+		get{
+			GameObject bubble = new GameObject();
+			(bubble.AddComponent(typeof(BubbleBase)) as BubbleBase).Init(Util.BubbleColor.getRandom(), Random.Range(0, 10), 1.5f, 0.01f);
+			remaining_bubbles--;
+			return bubble;
+		}
 	}
 		           
 	void Start () {

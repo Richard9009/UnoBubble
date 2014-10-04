@@ -40,7 +40,7 @@ public class BubbleBase : MonoBehaviour {
 		text_object.transform.parent = transform;
 	}
 
-	void OnCollisionEnter2D (Collision2D hit) {
+	public void OnCollisionEnter2D (Collision2D hit) {
 		rigidbody2D.AddForce(hit.relativeVelocity * -1);
 		if (rigidbody2D.velocity.magnitude > MAX_VELOCITY) {
 			float sin = rigidbody2D.velocity.y / rigidbody2D.velocity.magnitude;
@@ -48,25 +48,38 @@ public class BubbleBase : MonoBehaviour {
 		}
 	}
 
-	void OnMouseDown()
+	public void BecomeActiveBubble()
 	{
-
+		float diameter = Util.FullscreenSize ().y * Util.PANEL_HEIGHT;
+		Vector3 anchor_pos = new Vector3 (transform.position.x - 1.5f, transform.position.y + 1.5f, -5);
+		
+		float scale = diameter / renderer.bounds.size.y * transform.localScale.y;
+		transform.localScale = new Vector3 (scale, scale, 1);
+		HOTween.To(transform, 0.2f, new TweenParms().Prop("position", anchor_pos).
+		           				Ease(EaseType.EaseOutQuad).Prop("rotation",new Vector3()));
+		
+		HOTween.To (transform, 0.3f, new TweenParms ().Prop ("position", GameManager.getInstance().ActiveBubblePos).
+		            									Ease (EaseType.EaseInOutQuad).Delay (0.1f));
 	}
 
-	void handleTouch()
+	public void ReleaseAnimation()
+	{
+		HOTween.To (transform, 0.5f, new TweenParms ().Prop ("position", 
+		                    new Vector3 (transform.position.x, transform.position.y - 5.0f, -4)).
+		            		Ease (EaseType.EaseInCubic).Delay (0.2f));
+		Destroy (gameObject, 0.5f);
+	}
+	
+	public void handleTouch()
 	{
 		GameManager gm = GameManager.getInstance ();
-		bool matched = (gm.current_num == -1 || gm.current_num == number) ||
-			(gm.current_col == Color.white || gm.current_col == bubble_color);
+		bool matched = gm.IsValidBubble (bubble_color, number);
 		
 		if (matched) {
 			is_active = true;
-			gm.current_col = bubble_color;
-			gm.current_num = number;
-
-			int score = gm.combo_count * 100;
+		
 			GameObject points = new GameObject();
-			(points.AddComponent(typeof(TextObject)) as TextObject).init(score.ToString(), "Eras Bold ITC", 50, bubble_color);
+			(points.AddComponent(typeof(TextObject)) as TextObject).init(gm.Score.ToString(), "Eras Bold ITC", 50, bubble_color);
 			points.transform.position = transform.position - new Vector3(points.renderer.bounds.size.x/2, 0, 0);
 			
 			HOTween.To(points.transform, 1.0f, new TweenParms().Prop("position", 
@@ -75,14 +88,15 @@ public class BubbleBase : MonoBehaviour {
 			Destroy(points, 1.0f);
 
 			Destroy (rigidbody2D);
-			Destroy (collider2D);
+			collider2D.isTrigger = true;
+			BecomeActiveBubble();
 			gm.setAsActiveBubble (gameObject);
+
 		} else {
 			transform.rotation = new Quaternion();
 			(renderer as SpriteRenderer).sprite = Resources.Load<Sprite>("bubble_pop");
 			rigidbody2D.AddForce(new Vector2(0, 300.0f));
 			rigidbody2D.gravityScale *= 500;
-			gm.combo_count = 1;
 
 			Destroy (collider2D);
 			Destroy(text_object);
@@ -91,22 +105,19 @@ public class BubbleBase : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		if (is_active) return;
-
-		if (transform.position.y + renderer.bounds.size.y/2 < -Util.GameAreaSize ().y / 2) {
+		if (!is_active && transform.position.y + renderer.bounds.size.y/2 < -Util.GameAreaSize ().y / 2) {
 			Destroy(gameObject);
 		}
 
 		if (!collider2D) return;
-		if(Util.ON_MOBILE && Input.touchCount == 0) return;
-		if (!Util.ON_MOBILE && Input.GetMouseButtonDown (0) == false) return;
+		if (Input.GetMouseButtonDown (0) == false) return;
 
-		Vector3 input_pos = Util.ON_MOBILE ? new Vector3(Input.GetTouch(0).position.x, Input.GetTouch(0).position.y, 0) : Input.mousePosition;
 		Vector3 obj_pos = transform.position;
-		Vector3 touch_pos = Camera.main.ScreenToWorldPoint (input_pos);
+		Vector3 touch_pos = Camera.main.ScreenToWorldPoint (Input.mousePosition);
 		float distance = Mathf.Sqrt (Mathf.Pow ((obj_pos.x - touch_pos.x), 2) + Mathf.Pow ((obj_pos.y - touch_pos.y), 2));
 		if (distance < (collider2D as CircleCollider2D).radius) {
-			handleTouch();
+			if(is_active)GameManager.getInstance().ReleaseBubble();
+			else handleTouch();
 		}
 	}
 }
