@@ -69,6 +69,17 @@ public class BubbleBase : MonoBehaviour {
 		            		Ease (EaseType.EaseInCubic).Delay (0.2f));
 		Destroy (gameObject, 0.5f);
 	}
+
+	public void Pop()
+	{
+		transform.rotation = new Quaternion();
+		(renderer as SpriteRenderer).sprite = Resources.Load<Sprite>("bubble_pop");
+		rigidbody2D.AddForce(new Vector2(0, 300.0f));
+		rigidbody2D.gravityScale *= 500;
+		
+		Destroy (collider2D);
+		Destroy(text_object);
+	}
 	
 	public void handleTouch()
 	{
@@ -77,30 +88,22 @@ public class BubbleBase : MonoBehaviour {
 		
 		if (matched) {
 			is_active = true;
-		
-			GameObject points = new GameObject();
-			(points.AddComponent(typeof(TextObject)) as TextObject).init(gm.Score.ToString(), "Eras Bold ITC", 50, bubble_color);
-			points.transform.position = transform.position - new Vector3(points.renderer.bounds.size.x/2, 0, 0);
-			
-			HOTween.To(points.transform, 1.0f, new TweenParms().Prop("position", 
-			             new Vector3(points.transform.position.x, points.transform.position.y + 1.0f, -3)));
-			(points.GetComponent(typeof(TextObject)) as TextObject).fadeOut();
-			Destroy(points, 1.0f);
+
+			GameObject points = new GameObject ();
+			(points.AddComponent (typeof(TextObject)) as TextObject).init (gm.Score.ToString (), "Eras Bold ITC", 50, bubble_color);
+			points.transform.position = transform.position - new Vector3 (points.renderer.bounds.size.x / 2, 0, 0);
+
+			HOTween.To (points.transform, 1.0f, new TweenParms ().Prop ("position", 
+             new Vector3 (points.transform.position.x, points.transform.position.y + 1.0f, -3)));
+			(points.GetComponent (typeof(TextObject)) as TextObject).fadeOut ();
+			Destroy (points, 1.0f);
 
 			Destroy (rigidbody2D);
 			collider2D.isTrigger = true;
-			BecomeActiveBubble();
+			BecomeActiveBubble ();
 			gm.setAsActiveBubble (gameObject);
 
-		} else {
-			transform.rotation = new Quaternion();
-			(renderer as SpriteRenderer).sprite = Resources.Load<Sprite>("bubble_pop");
-			rigidbody2D.AddForce(new Vector2(0, 300.0f));
-			rigidbody2D.gravityScale *= 500;
-
-			Destroy (collider2D);
-			Destroy(text_object);
-		}
+		} else Pop ();
 	}
 	
 	// Update is called once per frame

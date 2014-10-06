@@ -12,10 +12,12 @@ public class Util : MonoBehaviour {
 		static public Color GREEN = new Color(0.2f, 0.8f, 0.2f);
 		static public Color BLUE = new Color(0.2f, 0.6f, 1.0f);
 		static public Color PURPLE = new Color(0.8f, 0.3f, 0.8f);
+		static public Color ORANGE = new Color(1.0f, 0.7f, 0.1f);
+		static public Color CYAN = new Color(0.2f, 0.8f, 0.8f);
 
 		public static Color getRandom(int total)
 		{
-			Color[] colors = { RED, GREEN, BLUE, PURPLE };
+			Color[] colors = { RED, GREEN, BLUE, PURPLE, ORANGE, CYAN };
 			return colors[Random.Range(0, total)];
 		}
 	};
