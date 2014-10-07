@@ -48,9 +48,9 @@ public class GameplayScene : MonoBehaviour {
 		remaining_bubbles_text.setAlignment (TextAlignment.Center);
 		remaining_bubbles_object.transform.position = new Vector3 (0, top_panel.transform.position.y + 0.3f, -3);
 
-		Block.create (new Vector3 (-1, 1.5f, -3));
-		Spike.create (new Vector3 (1, -1.5f, -3));
-
+		//Block.create (new Vector3 (-1, 1.5f, -1));
+		//Spike.create (new Vector3 (1, -1.5f, -1));
+		Portal.create (new Vector3 (-3, 0, -1), new Vector3 (3, 2, -1));
 		screen_size.x -= left_wall.renderer.bounds.size.x * 2;
 	}
 

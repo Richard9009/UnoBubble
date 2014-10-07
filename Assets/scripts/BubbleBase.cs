@@ -41,7 +41,7 @@ public class BubbleBase : MonoBehaviour {
 	}
 
 	public void OnCollisionEnter2D (Collision2D hit) {
-		rigidbody2D.AddForce(hit.relativeVelocity * -1);
+		rigidbody2D.velocity *= 1.5f;
 		if (rigidbody2D.velocity.magnitude > MAX_VELOCITY) {
 			float sin = rigidbody2D.velocity.y / rigidbody2D.velocity.magnitude;
 			rigidbody2D.velocity = new Vector2(MAX_VELOCITY * (1 - sin), MAX_VELOCITY * sin);
