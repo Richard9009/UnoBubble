@@ -36,8 +36,9 @@ public class BubbleBase : MonoBehaviour {
 		transform.localScale = new Vector3 (scale, scale, 1);
 
 		text_object = new GameObject ();
-		(text_object.AddComponent (typeof(TextObject)) as TextObject).init (num.ToString (), "Eras Bold ITC", 75, col);
+		(text_object.AddComponent (typeof(TextObject)) as TextObject).init (num.ToString (), "Bobbleboddy", 100, col);
 		text_object.transform.parent = transform;
+		text_object.transform.position += new Vector3(0, 0.1f, 0);
 	}
 
 	public void OnCollisionEnter2D (Collision2D hit) {
@@ -73,9 +74,9 @@ public class BubbleBase : MonoBehaviour {
 	public void Pop()
 	{
 		transform.rotation = new Quaternion();
-		(renderer as SpriteRenderer).sprite = Resources.Load<Sprite>("bubble_pop");
+		(renderer as SpriteRenderer).sprite = Resources.Load<Sprite>("bubble pop");
 		rigidbody2D.AddForce(new Vector2(0, 300.0f));
-		rigidbody2D.gravityScale *= 500;
+		rigidbody2D.gravityScale *= 200;
 		
 		Destroy (collider2D);
 		Destroy(text_object);
