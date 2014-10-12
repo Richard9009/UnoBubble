@@ -106,7 +106,7 @@ public class GameManager {
 		if(!match) match = current_col ==  col || current_num == num;
 
 		if (match) {
-			if(current_col == col && current_num == num) 
+			if(current_col == col && current_num == num && combo_count > 0) 
 				combo_count *= 2; //super match, double score
 			else combo_count++;
 

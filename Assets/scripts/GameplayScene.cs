@@ -72,9 +72,14 @@ public class GameplayScene : MonoBehaviour {
 		score_text.setText (gm.TotalScore.ToString());
 		if (counter == interval && gm.RemainingBubbles > 0) {
 			counter = 0;
-			gm.NewBubble.transform.position = new Vector3(Random.Range(-screen_size.x/2, screen_size.x/2), Util.FullscreenSize().y * 0.75f,-1.0f);
+			GameObject bubble = gm.NewBubble;
+			bubble.transform.position = new Vector3(Random.Range(-screen_size.x/2, screen_size.x/2), Util.FullscreenSize().y * 0.75f,-1.0f);
+			bubble.name = "bubble";
 			remaining_bubbles_text.setText(gm.RemainingBubbles.ToString());
+
 		}
+
+		if (Input.GetKeyDown(KeyCode.Escape)) { Application.Quit(); }
 	}
 }
 
