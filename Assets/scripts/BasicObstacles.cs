@@ -17,10 +17,17 @@ public class Block : MonoBehaviour {
 		SpriteRenderer sr = gameObject.AddComponent (typeof(SpriteRenderer)) as SpriteRenderer;
 		sr.sprite = Resources.Load<Sprite> ("block");
 		sr.color = Color.red;
+		transform.localScale = new Vector3 (0.2f, 0.2f, 1);
 
 		gameObject.AddComponent (typeof(Rigidbody2D));
 		rigidbody2D.isKinematic = true;
 		gameObject.AddComponent (typeof(BoxCollider2D)); 
+		collider2D.sharedMaterial = Resources.Load<PhysicsMaterial2D> ("bouncy");
+	}
+
+	void OnCollisionEnter2D (Collision2D hit) {
+		Rigidbody2D body = hit.gameObject.rigidbody2D;
+		body.velocity = new Vector2(body.velocity.x * -1, body.velocity.y * -1);
 	}
 	
 	// Update is called once per frame
@@ -35,7 +42,7 @@ public class Spike : MonoBehaviour {
 	{
 		GameObject obj = new GameObject ();
 		obj.transform.position = pos;
-		obj.transform.localScale = new Vector3 (3.0f, 3.0f, 1.0f);
+		obj.transform.localScale = new Vector3 (0.3f, 0.3f, 1.0f);
 		obj.name = "Spike";
 		return obj.AddComponent (typeof(Spike)) as Spike;
 	}
@@ -62,16 +69,16 @@ public class Portal : MonoBehaviour {
 	{
 		GameObject blue = new GameObject ();
 		blue.transform.position = pos_blue;
-		blue.transform.localScale = new Vector3 (5, 5, 1);
+		blue.transform.localScale = new Vector3 (0.3f, 0.5f, 1);
 		blue.name = "PortalBlue";
-		(blue.AddComponent (typeof(SpriteRenderer)) as SpriteRenderer).sprite = Resources.Load<Sprite> ("portal_blue");
+		(blue.AddComponent (typeof(SpriteRenderer)) as SpriteRenderer).sprite = Resources.Load<Sprite> ("portal");
 		Portal portalB = blue.AddComponent (typeof(Portal)) as Portal;
 
 		GameObject red = new GameObject ();
 		red.transform.position = pos_red;
-		red.transform.localScale = new Vector3 (5, 5, 1);
+		red.transform.localScale = new Vector3 (-0.3f, 0.5f, 1);
 		red.name = "PortalRed";
-		(red.AddComponent (typeof(SpriteRenderer)) as SpriteRenderer).sprite = Resources.Load<Sprite> ("portal_red");
+		(red.AddComponent (typeof(SpriteRenderer)) as SpriteRenderer).sprite = Resources.Load<Sprite> ("portal");
 		portalB.Pair = red.AddComponent (typeof(Portal)) as Portal;
 
 		return portalB;
@@ -94,6 +101,7 @@ public class Portal : MonoBehaviour {
 	void OnTriggerEnter2D(Collider2D other)
 	{
 		GameObject obj = other.gameObject;
+		if (obj.name != "bubble") return;
 		float original_scale = obj.transform.localScale.x;
 		obj.collider2D.enabled = false; //disable collider to prevent infinite loop
 
@@ -120,7 +128,7 @@ public class Portal : MonoBehaviour {
 
 	public IEnumerator ActivateBack(GameObject obj, float ori_scale)
 	{
-		yield return new WaitForSeconds(0.7f);
+		yield return new WaitForSeconds(1.0f);
 		obj.collider2D.enabled = true;
 		obj.transform.localScale = new Vector3 (ori_scale, ori_scale, 1);
 	}

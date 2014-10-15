@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using SimpleJSON;
 
 public class GameManager {
@@ -12,6 +13,7 @@ public class GameManager {
 	private int current_num = -1;
 	private Color current_col = Color.white;
 	private int combo_count = 0;
+	private int power_level = 0;
 
 	private int total_score = 0;
 	public int TotalScore { get { return total_score; } }
@@ -110,6 +112,26 @@ public class GameManager {
 				combo_count *= 2; //super match, double score
 			else combo_count++;
 
+			if(combo_count >= 10 && power_level == 0) {
+				XCEvent.DispatchEvent("SLOW DOWN", null);
+				power_level++;
+			}
+			else if(combo_count >= 25 && power_level == 1) {
+				XCEvent.DispatchEvent("SLOW DOWN", null);
+				Hashtable param = new Hashtable();
+				param.Add("color", col);
+				XCEvent.DispatchEvent("CHANGE COLOR", param);
+				power_level++;
+			}
+			else if(combo_count>= 50 && power_level == 2)
+			{
+				XCEvent.DispatchEvent("SLOW DOWN", null);
+				Hashtable param = new Hashtable();
+				param.Add("color", col); 
+				XCEvent.DispatchEvent("CHANGE COLOR", param);
+				XCEvent.DispatchEvent("FIESTA", param);
+				power_level++;
+			}
 			current_col = col;
 			current_num = num;
 		} else

@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using System.Collections;
-using Holoville.HOTween;
 
 public class BubbleBase : MonoBehaviour {
 
@@ -9,9 +8,18 @@ public class BubbleBase : MonoBehaviour {
 	private int number;
 	private bool is_active = false;
 	private GameObject text_object;
-
+	private GameObject reflection;
+	private GameObject shadow;
 	void Start () {
-
+		reflection = new GameObject ();
+		(reflection.AddComponent (typeof(SpriteRenderer)) as SpriteRenderer).sprite = Resources.Load<Sprite> ("bubble-reflection");
+		reflection.transform.position = transform.position;
+		reflection.name = "reflection";
+		
+		shadow = new GameObject ();
+		(shadow.AddComponent (typeof(SpriteRenderer)) as SpriteRenderer).sprite = Resources.Load<Sprite> ("bubble-shadow");
+		shadow.transform.position = transform.position;
+		shadow.name = "shadow";
 	}
 
 	public void Init(Color col, int num, float size, float falling_speed)
@@ -23,6 +31,7 @@ public class BubbleBase : MonoBehaviour {
 		sprite.sprite = Resources.Load<Sprite>("bubble");
 		sprite.color = col;
 		
+
 		gameObject.AddComponent (typeof(Rigidbody2D));
 		rigidbody2D.gravityScale = falling_speed;
 		float angle = Random.Range (-Mathf.PI * 3/4, -Mathf.PI/4);
@@ -35,9 +44,21 @@ public class BubbleBase : MonoBehaviour {
 		transform.localScale = new Vector3 (scale, scale, 1);
 
 		text_object = new GameObject ();
-		(text_object.AddComponent (typeof(TextObject)) as TextObject).init (num.ToString (), "Bobbleboddy", 100, col);
+		(text_object.AddComponent (typeof(TextObject)) as TextObject).init (num.ToString (), "dolphins", 100, col);
 		text_object.transform.parent = transform;
-		text_object.transform.position += new Vector3(0, 0.1f, 0);
+		text_object.transform.position += new Vector3(0, -0.1f, 0);
+
+
+	}
+
+	public void SlowDown(Hashtable param)
+	{
+		rigidbody.velocity = new Vector3 ();
+	}
+
+	public void ChangeColor(Hashtable param)
+	{
+		(renderer as SpriteRenderer).color = (Color) param ["color"];
 	}
 
 	public void OnCollisionEnter2D (Collision2D hit) {
@@ -46,35 +67,30 @@ public class BubbleBase : MonoBehaviour {
 
 	public void BecomeActiveBubble()
 	{
-		Vector3 anchor_pos = new Vector3 (transform.position.x - 1.5f, transform.position.y + 1.5f, -5);
 		transform.rotation = Quaternion.identity;
-		//transform.position = GameManager.getInstance ().ActiveBubblePos;
-		//HOTween.To(transform, 0.2f, new TweenParms().Prop("position", anchor_pos));
-		
-		//HOTween.To (transform, 0.3f, new TweenParms ().Prop ("position", GameManager.getInstance().ActiveBubblePos).
-		  //          									Ease (EaseType.EaseInOutQuad));
-		(gameObject.AddComponent(typeof(XCAnimation)) as XCAnimation).MoveTo (anchor_pos, 0.2f);
-		(gameObject.AddComponent(typeof(XCAnimation)) as XCAnimation).
-			MoveTo (GameManager.getInstance ().ActiveBubblePos, 0.3f).Delay(0.2f);
+		XCAnimation.Create(gameObject).MoveBy (new Vector3(-1.5f, 1.5f, -3), 0.2f).Link(
+			XCAnimation.Create(gameObject).MoveTo (GameManager.getInstance ().ActiveBubblePos, 0.3f));
 	}
 
 	public void ReleaseAnimation()
 	{
-		HOTween.To (transform, 0.5f, new TweenParms ().Prop ("position", 
-		                    new Vector3 (transform.position.x, transform.position.y - 5.0f, -4)).
-		            		Ease (EaseType.EaseInCubic).Delay (0.2f));
-		Destroy (gameObject, 0.5f);
+		XCAnimation.Create(gameObject).MoveBy(Vector3.down * 5, 0.5f);
+		Destroy (gameObject, 0.6f);
 	}
 
 	public void Pop()
 	{
-		transform.rotation = new Quaternion();
-		(renderer as SpriteRenderer).sprite = Resources.Load<Sprite>("bubble pop");
-		rigidbody2D.AddForce(new Vector2(0, 300.0f));
-		rigidbody2D.gravityScale *= 200;
-		
+		transform.rotation = Quaternion.identity;
+		(renderer as SpriteRenderer).sprite = Resources.Load<Sprite>("bubble-pop");
+		XCAnimation.Create(gameObject).FadeOut (1.0f);
+		XCAnimation.Create(gameObject).ScaleTo (transform.localScale * 2, 1.0f);
+
+		Destroy (gameObject, 1.0f);
+		Destroy (reflection);
+		Destroy (shadow);
 		Destroy (collider2D);
-		Destroy(text_object);
+		Destroy (rigidbody2D);
+		Destroy (text_object);
 	}
 
 	public void handleTouch()
@@ -86,44 +102,49 @@ public class BubbleBase : MonoBehaviour {
 			is_active = true;
 
 			GameObject points = new GameObject ();
-			(points.AddComponent (typeof(TextObject)) as TextObject).init (gm.Score.ToString (), "Bobbleboddy", 50, bubble_color);
+			(points.AddComponent (typeof(TextObject)) as TextObject).init (gm.Score.ToString (), "dolphins", 50, bubble_color);
 			points.transform.position = transform.position - new Vector3 (points.renderer.bounds.size.x / 2, 0, 0);
 
-			HOTween.To (points.transform, 1.0f, new TweenParms ().Prop ("position", 
-             				new Vector3 (points.transform.position.x, points.transform.position.y + 1.0f, -3)));
-			(points.GetComponent (typeof(TextObject)) as TextObject).fadeOut ();
-			Destroy (points, 1.0f);
-
+			Destroy (points, 1.1f);
 			Destroy (rigidbody2D);
+			Destroy(reflection);
+			Destroy(shadow);
 			collider2D.isTrigger = true;
 			BecomeActiveBubble ();
 			gm.setAsActiveBubble (gameObject);
+
+			XCAnimation.Create(points).MoveBy(Vector3.up, 1.0f);
+			XCAnimation.Create(points).FadeOut(1.0f);
 
 		} else Pop ();
 	}
 	
 	// Update is called once per frame
 	void Update () {
+		if (reflection) {
+			reflection.transform.position = transform.position;
+			reflection.transform.localScale = transform.localScale;
+			shadow.transform.position = transform.position + new Vector3 (0.2f, -0.2f, 0);
+			shadow.transform.localScale = transform.localScale;
+		}
 		if (!is_active && transform.position.y + renderer.bounds.size.y/2 < -Util.GameAreaSize ().y / 2) {
 			Destroy(gameObject);
+			Destroy(reflection);
+			Destroy(shadow);
 		}
 
 		if (!collider2D) return;
-		if (Input.touchCount == 0) return;
-		//if (Input.GetMouseButtonDown (0) == false) return;
+		if (Input.GetMouseButtonDown (0) == false) return;
 
-		Touch touch = Input.GetTouch (0);
-		if (touch.phase == TouchPhase.Began) {
-			Vector3 obj_pos = transform.position;
-			Vector3 touch_pos = Camera.main.ScreenToWorldPoint (touch.rawPosition);
-			float distance = Mathf.Sqrt (Mathf.Pow (obj_pos.x - touch_pos.x, 2) + Mathf.Pow (obj_pos.y - touch_pos.y, 2));
+		Vector3 obj_pos = transform.position;
+		Vector3 touch_pos = Camera.main.ScreenToWorldPoint (Input.mousePosition);
+		float distance = Mathf.Sqrt (Mathf.Pow (obj_pos.x - touch_pos.x, 2) + Mathf.Pow (obj_pos.y - touch_pos.y, 2));
 
-			if (distance < (collider2D as CircleCollider2D).radius) {
-				if (is_active)
-						GameManager.getInstance ().ReleaseBubble ();
-				else
-						handleTouch ();
-			}
+		if (distance < (collider2D as CircleCollider2D).radius * transform.localScale.x) {
+			if (is_active)
+					GameManager.getInstance ().ReleaseBubble ();
+			else
+					handleTouch ();
 		}
 	}
 }

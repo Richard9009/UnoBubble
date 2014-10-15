@@ -12,14 +12,14 @@ public class TextObject : MonoBehaviour
 	{
 		gameObject.AddComponent (typeof(MeshRenderer));
 		transform.parent = transform;
-		renderer.material = Resources.Load(font + " Material") as Material;
+		renderer.material = Resources.Load("fonts/" + font + " Material") as Material;
 		
 		mesh = gameObject.AddComponent(typeof(TextMesh)) as TextMesh;
 		mesh.text = text;
 		mesh.color = col;
 		mesh.fontSize = size;
 		mesh.characterSize = 0.1f;
-		mesh.font = Resources.Load (font) as Font;
+		mesh.font = Resources.Load ("fonts/" + font) as Font;
 		gameObject.transform.position = new Vector2(-gameObject.renderer.bounds.size.x / 2, gameObject.renderer.bounds.size.y / 2);
 	}
 
