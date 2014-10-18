@@ -81,9 +81,10 @@ public class GameManager {
 
 	public void setAsActiveBubble(GameObject bubble)
 	{
-		if (current_bubble != null)
-			(current_bubble.GetComponent("BubbleBase") as BubbleBase).ReleaseAnimation();
-
+		if (current_bubble != null) {
+			XCAnimation.StopAllAnimations(current_bubble);
+			(current_bubble.GetComponent ("BubbleBase") as BubbleBase).ReleaseAnimation ();
+		}
 		current_bubble = bubble;
 	}
 
@@ -108,8 +109,8 @@ public class GameManager {
 		if(!match) match = current_col ==  col || current_num == num;
 
 		if (match) {
-			if(current_col == col && current_num == num && combo_count > 0) 
-				combo_count *= 2; //super match, double score
+			if(current_col == col && current_num == num) 
+				combo_count += 5; //super match, double score
 			else combo_count++;
 
 			if(combo_count >= 10 && power_level == 0) {
@@ -125,11 +126,14 @@ public class GameManager {
 			}
 			else if(combo_count>= 50 && power_level == 2)
 			{
+				Debug.Log("fiesta called");
 				XCEvent.DispatchEvent("SLOW DOWN", null);
+				Debug.Log("slow down success");
 				Hashtable param = new Hashtable();
 				param.Add("color", col); 
 				XCEvent.DispatchEvent("CHANGE COLOR", param);
-				XCEvent.DispatchEvent("FIESTA", param);
+				Debug.Log("change color success");
+				XCEvent.DispatchEvent("FIESTA", null);
 				power_level++;
 			}
 			current_col = col;
