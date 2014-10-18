@@ -35,11 +35,6 @@ public class XCAnimation : MonoBehaviour {
 	private int delay_frame = 0;
 	private int frame_count = 0;
 
-	void OnDisabled()
-	{
-		running_animation.Remove (this);
-	}
-
 	//how much time left from now until animation finishes in seconds
 	public float TotalTime {
 		get { return (float)(delay_frame + frame_count) / Util.FRAME_RATE; }
@@ -203,6 +198,11 @@ public class XCAnimation : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
+	}
+
+	void OnDestroy()
+	{
+		running_animation.Remove (this);
 	}
 	
 	// Update is called once per frame

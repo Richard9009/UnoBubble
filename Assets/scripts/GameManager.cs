@@ -3,6 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using SimpleJSON;
 
+public enum MatchStatus {
+	MATCH = 1, NOT_MATCH, SUPER_MATCH
+};
+
 public class GameManager {
 
 	// Use this for initialization
@@ -12,8 +16,13 @@ public class GameManager {
 	private GameObject current_bubble = null;
 	private int current_num = -1;
 	private Color current_col = Color.white;
+	private int next_combo = 10;
+
 	private int combo_count = 0;
-	private int power_level = 0;
+	public int ComboCount { get { return combo_count; } }
+
+	private ComboName combo_level = ComboName.NONE;
+	public  ComboName ComboLevel { get { return combo_level; } }
 
 	private int total_score = 0;
 	public int TotalScore { get { return total_score; } }
@@ -98,52 +107,77 @@ public class GameManager {
 		current_col = Color.white;
 		current_num = -1;
 		combo_count = 0;
+		next_combo = 10;
+		combo_level = ComboName.NONE;
 
-		if (current_bubble != null)
-			(current_bubble.GetComponent("BubbleBase") as BubbleBase).ReleaseAnimation();
+		if (current_bubble != null) {
+			current_bubble.name = "released bubble";
+			(current_bubble.GetComponent ("BubbleBase") as BubbleBase).ReleaseAnimation ();
+		}
 	}
 
-	public bool IsValidBubble(Color col, int num)
+	public MatchStatus IsValidBubble(Color col, int num)
 	{
-		bool match = current_col == Color.white || current_num == -1;
-		if(!match) match = current_col ==  col || current_num == num;
+		MatchStatus match = (current_col == Color.white || current_num == -1) ? MatchStatus.MATCH : MatchStatus.NOT_MATCH;
+		if(match == MatchStatus.NOT_MATCH){
+			if(current_col ==  col && current_num == num)
+				match = MatchStatus.SUPER_MATCH;
+			else if(current_col ==  col || current_num == num)
+				match = MatchStatus.MATCH;
+		}
 
-		if (match) {
-			if(current_col == col && current_num == num) 
+		if(match == MatchStatus.NOT_MATCH)
+			combo_count = 0;
+		else {
+			if(match == MatchStatus.SUPER_MATCH) 
 				combo_count += 5; //super match, double score
 			else combo_count++;
 
-			if(combo_count >= 10 && power_level == 0) {
-				XCEvent.DispatchEvent("SLOW DOWN", null);
-				power_level++;
-			}
-			else if(combo_count >= 25 && power_level == 1) {
-				XCEvent.DispatchEvent("SLOW DOWN", null);
-				Hashtable param = new Hashtable();
-				param.Add("color", col);
-				XCEvent.DispatchEvent("CHANGE COLOR", param);
-				power_level++;
-			}
-			else if(combo_count>= 50 && power_level == 2)
-			{
-				Debug.Log("fiesta called");
-				XCEvent.DispatchEvent("SLOW DOWN", null);
-				Debug.Log("slow down success");
-				Hashtable param = new Hashtable();
-				param.Add("color", col); 
-				XCEvent.DispatchEvent("CHANGE COLOR", param);
-				Debug.Log("change color success");
-				XCEvent.DispatchEvent("FIESTA", null);
-				power_level++;
-			}
 			current_col = col;
 			current_num = num;
-		} else
-			combo_count = 0;
+
+			if(combo_count >= next_combo)
+				CallCombo();
+		}
 
 		return match;
 	}
 
+	private void CallCombo()
+	{
+		if(combo_level != ComboName.PERFECT)
+			combo_level++;
+
+		ComboAnimation.create (combo_level);
+		XCEvent.DispatchEvent ("COMBO CALLED", null);
+		Camera.main.audio.PlayOneShot(Resources.Load<AudioClip>("sounds/combo"));
+
+		switch (combo_level) {
+			case ComboName.PERFECT:
+			case ComboName.SUPER:
+			case ComboName.AWESOME:
+					XCEvent.DispatchEvent("FIESTA", null);
+					goto case ComboName.BRAVO;
+			case ComboName.BRAVO:
+					Hashtable param = new Hashtable();
+					param.Add("color", current_col);
+					XCEvent.DispatchEvent("CHANGE COLOR", param);
+					goto case ComboName.COMBO;
+			case ComboName.COMBO:
+					XCEvent.DispatchEvent("SLOW DOWN", null);
+					break;
+
+		}
+
+		switch (combo_level) {
+			case ComboName.PERFECT: next_combo += 150; break;
+			case ComboName.SUPER: next_combo = 200; break;
+			case ComboName.AWESOME: next_combo = 100; break;
+			case ComboName.BRAVO: next_combo = 50; break;
+			case ComboName.COMBO: next_combo = 25; break;
+		}
+	}
+	
 	public int Score
 	{
 		get {
@@ -153,12 +187,12 @@ public class GameManager {
 		}
 	}
 
-	public GameObject NewBubble
+	public BubbleBase NewBubble
 	{
 		get{
-			GameObject bubble = new GameObject();
-			(bubble.AddComponent(typeof(BubbleBase)) as BubbleBase).Init(Util.BubbleColor.getRandom(stage_data.colors), 
+			BubbleBase bubble = BubbleBase.create(Util.BubbleColor.getRandom(stage_data.colors), 
 			                                 Random.Range(0, stage_data.max_num), stage_data.size, stage_data.gravity);
+			if(bubble == null) return null;
 			remaining_bubbles--;
 			return bubble;
 		}

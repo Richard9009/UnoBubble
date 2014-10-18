@@ -2,9 +2,9 @@
 	"size" : 7,
 	"colors" : 3,
 	"max_num" : 6,
-	"speed" : 5,
-	"interval" : 0.5,
-	"bubbles" : 60,
+	"speed" : 3,
+	"interval" : 0.25,
+	"bubbles" : 200,
 	"goal" : 2000,
 	"missions" : [ ]
 }

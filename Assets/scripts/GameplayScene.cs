@@ -48,17 +48,18 @@ public class GameplayScene : MonoBehaviour {
 
 		GameObject score_object = new GameObject ();
 		score_text = score_object.AddComponent (typeof(TextObject)) as TextObject;
-		score_text.init ("0", "dolphins", 60, Color.white);
-		score_object.transform.position = top_left.transform.position + new Vector3 (-1, 0, -1);
+		score_text.init ("0", "dolphins", 50, Color.white);
+		score_object.transform.position = top_left.transform.position + new Vector3 (-1, -0.2f, -1);
 
 		(GameObject.Find ("stage num text").GetComponent (typeof(TextMesh)) as TextMesh).text = GameManager.stage_num.ToString ();
 
 		GameObject remaining_bubbles_object = new GameObject ();
 		remaining_bubbles_text = remaining_bubbles_object.AddComponent (typeof(TextObject)) as TextObject;
-		remaining_bubbles_text.init (GameManager.getInstance().RemainingBubbles.ToString(), "dolphins", 80, Color.white);
+		remaining_bubbles_text.init (GameManager.getInstance().RemainingBubbles.ToString(), "dolphins", 80, Color.grey);
 		remaining_bubbles_text.setAlignment (TextAlignment.Center);
-		remaining_bubbles_object.transform.position = new Vector3 (0, top_panel.transform.position.y + 0.8f, -4);
+		remaining_bubbles_object.transform.position = new Vector3 (0, top_panel.transform.position.y + 0.6f, -4);
 
+		ComboCounter.create ();
 		//Block.create (new Vector3 (-1, -1.5f, -1));
 		//Spike.create (new Vector3 (1, -1.5f, -1));
 		//Portal.create (new Vector3 (-3, 0, -1), new Vector3 (3, 2, -1));
@@ -72,7 +73,8 @@ public class GameplayScene : MonoBehaviour {
 		score_text.setText (gm.TotalScore.ToString());
 		if (counter == interval && gm.RemainingBubbles > 0) {
 			counter = 0;
-			GameObject bubble = gm.NewBubble;
+			BubbleBase bubble = gm.NewBubble;
+			if(bubble == null) return;
 			bubble.transform.position = new Vector3(Random.Range(-screen_size.x/2, screen_size.x/2), Util.FullscreenSize().y * 0.75f,-1.0f);
 			bubble.name = "bubble";
 			remaining_bubbles_text.setText(gm.RemainingBubbles.ToString());

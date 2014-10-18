@@ -13,7 +13,7 @@ public class TextObject : MonoBehaviour
 		gameObject.AddComponent (typeof(MeshRenderer));
 		transform.parent = transform;
 		renderer.material = Resources.Load("fonts/" + font + " Material") as Material;
-		
+
 		mesh = gameObject.AddComponent(typeof(TextMesh)) as TextMesh;
 		mesh.text = text;
 		mesh.color = col;
@@ -36,6 +36,11 @@ public class TextObject : MonoBehaviour
 	public void setColor(Color col)
 	{
 		mesh.color = col;
+	}
+
+	public void setVisible(bool visible)
+	{
+		renderer.enabled = visible;
 	}
 
 	public void fadeOut()

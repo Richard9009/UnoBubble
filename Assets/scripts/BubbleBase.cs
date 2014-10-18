@@ -1,9 +1,24 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class BubbleBase : MonoBehaviour {
 
-	// Use this for initialization
+	private const int MAXIMUM_BUBBLES = 40;
+	private static int num_of_bubbles = 0;
+
+	public static BubbleBase create(Color col, int num, float size, float falling_speed)
+	{
+		if (num_of_bubbles == MAXIMUM_BUBBLES)
+						return null;
+
+		GameObject obj = new GameObject ();
+		BubbleBase ret = obj.AddComponent (typeof(BubbleBase)) as BubbleBase;
+		ret.Init (col, num, size, falling_speed);
+		num_of_bubbles++;
+		return ret;
+	}
+
 	private Color bubble_color;
 	private int number;
 	private bool is_active = false;
@@ -22,6 +37,10 @@ public class BubbleBase : MonoBehaviour {
 		shadow.name = "shadow";
 	}
 
+	void OnDestroy() {
+		num_of_bubbles--;
+	}
+
 	public void Init(Color col, int num, float size, float falling_speed)
 	{
 		bubble_color = col;
@@ -34,28 +53,22 @@ public class BubbleBase : MonoBehaviour {
 		SpriteRenderer sprite = gameObject.AddComponent(typeof(SpriteRenderer)) as SpriteRenderer;
 		sprite.sprite = Resources.Load<Sprite>("bubble");
 		sprite.color = col;
-		Debug.Log("sprite created");
 
 		float scale = size / renderer.bounds.size.x;
 		transform.localScale = new Vector3 (scale, scale, 1);
 
-		if (num < 10) {
-			text_object = new GameObject ();
-			(text_object.AddComponent (typeof(TextObject)) as TextObject).init (num.ToString (), "dolphins", 100, col);
-			text_object.transform.parent = transform;
-			text_object.transform.position += new Vector3 (0, -0.1f, 0);
-		}
-		Debug.Log("number created");
+		text_object = new GameObject ();
+		(text_object.AddComponent (typeof(TextObject)) as TextObject).init (num.ToString (), "dolphins", 100, col);
+		text_object.transform.parent = transform;
+		text_object.transform.position += new Vector3 (0, -0.1f, 0);
 
 		gameObject.AddComponent(typeof(CircleCollider2D));
 		collider2D.sharedMaterial = Resources.Load<PhysicsMaterial2D> ("bouncy");
-		Debug.Log("collider created");
 
 		gameObject.AddComponent (typeof(Rigidbody2D));
 		rigidbody2D.gravityScale = falling_speed;
 		float angle = Random.Range (-Mathf.PI * 3/4, -Mathf.PI/4);
 		rigidbody2D.AddForce (new Vector2 (Mathf.Cos (angle) * 50, Mathf.Sin (angle) * 50));
-		Debug.Log("rigid body created");
 		
 	}
 
@@ -75,20 +88,12 @@ public class BubbleBase : MonoBehaviour {
 
 	public void fiesta(Hashtable param)
 	{
-		Debug.Log("fiesta start");
-	
 		for (int i = 0; i < 4; i++) {
-			Debug.Log("creating bubble no." + i.ToString());
-			GameObject bubble = new GameObject();
-			(bubble.AddComponent(typeof(BubbleBase)) as BubbleBase).Init
-				(bubble_color, number, renderer.bounds.size.x, rigidbody2D.gravityScale);
+			BubbleBase bubble = BubbleBase.create(bubble_color, number, renderer.bounds.size.x, rigidbody2D.gravityScale);
+			if(bubble == null) return;
 			bubble.transform.localScale = transform.localScale;
 			bubble.transform.position = transform.position;
-			
-			//bubble.rigidbody2D.AddForce(new Vector2(Random.Range(-1.0f, 1.0f) * 50, Random.Range(-1.0f, 1.0f) * 50));
 		}
-		Debug.Log("fiesta end");
-		
 	}
 
 	public void OnCollisionEnter2D (Collision2D hit) {
@@ -98,6 +103,7 @@ public class BubbleBase : MonoBehaviour {
 	public void BecomeActiveBubble()
 	{
 		Debug.Log("become active bubble start");
+		Camera.main.audio.PlayOneShot(Resources.Load<AudioClip>("sounds/bubble"));
 		transform.rotation = Quaternion.identity;
 		XCAnimation.Create(gameObject).MoveBy (new Vector3(-1.5f, 1.5f, -3), 0.2f).Link(
 			XCAnimation.Create(gameObject).MoveTo (GameManager.getInstance ().ActiveBubblePos, 0.3f));
@@ -115,6 +121,7 @@ public class BubbleBase : MonoBehaviour {
 
 	public void Pop()
 	{
+			Camera.main.audio.PlayOneShot(Resources.Load<AudioClip>("sounds/bubble pop"));
 		transform.rotation = Quaternion.identity;
 		(renderer as SpriteRenderer).sprite = Resources.Load<Sprite>("bubble-pop");
 		XCAnimation.Create(gameObject).FadeOut (1.0f);
@@ -135,16 +142,28 @@ public class BubbleBase : MonoBehaviour {
 	public void handleTouch()
 	{
 		GameManager gm = GameManager.getInstance ();
-		bool matched = gm.IsValidBubble (bubble_color, number);
+		MatchStatus match = gm.IsValidBubble (bubble_color, number);
 		
-		if (matched) {
+		if(match == MatchStatus.NOT_MATCH){
+			Pop ();
+			XCEvent.DispatchEvent("COMBO BREAK", null);
+		}
+		else {
 			is_active = true;
+			if(match == MatchStatus.SUPER_MATCH) {
+				GameObject smatch = new GameObject ();
+				(smatch.AddComponent (typeof(TextObject)) as TextObject).init ("SUPER MATCH\nCombo +5", "Eras Bold ITC", 30, Color.white);
+				(smatch.GetComponent (typeof(TextObject)) as TextObject).setAlignment(TextAlignment.Center);
+				smatch.transform.position = transform.position - new Vector3 (smatch.renderer.bounds.size.x / 2, -1.0f, 0);
+				XCAnimation.Create(smatch).ScaleTo(Vector3.one * 1.5f, 2.0f);
+				XCAnimation.Create(smatch).FadeOut(2.0f);
+				Destroy(smatch, 2.1f);
+				Camera.main.audio.PlayOneShot(Resources.Load<AudioClip>("sounds/super match"));
+			}
 
-			Debug.Log("handle touch start");
 			GameObject points = new GameObject ();
-			(points.AddComponent (typeof(TextObject)) as TextObject).init (gm.Score.ToString (), "dolphins", 50, bubble_color);
+			(points.AddComponent (typeof(TextObject)) as TextObject).init (gm.Score.ToString(), "dolphins", 50, bubble_color);
 			points.transform.position = transform.position - new Vector3 (points.renderer.bounds.size.x / 2, 0, 0);
-			Debug.Log("point text created");
 			
 			Destroy (points, 1.1f);
 			Destroy (rigidbody2D);
@@ -152,19 +171,17 @@ public class BubbleBase : MonoBehaviour {
 			Destroy(shadow);
 			reflection = null;
 			shadow = null;
-			Debug.Log("components destroyed");
 			
 			collider2D.isTrigger = true;
 			BecomeActiveBubble ();
 			gm.setAsActiveBubble (gameObject);
-			Debug.Log("has became active bubble");
-			
+
+			XCEvent.DispatchEvent("GET BUBBLE", null);
 			XCEvent.RemoveAllListeners(this);
 			XCAnimation.Create(points).MoveBy(Vector3.up, 1.0f);
 			XCAnimation.Create(points).FadeOut(1.0f);
-			Debug.Log("handle touch end");
-			
-		} else Pop ();
+		}
+
 	}
 	
 	// Update is called once per frame
@@ -194,9 +211,9 @@ public class BubbleBase : MonoBehaviour {
 
 		if (distance < (collider2D as CircleCollider2D).radius * transform.localScale.x) {
 			Debug.Log("bubble clicked");
-			if (is_active)
-					GameManager.getInstance ().ReleaseBubble ();
-			else
+			//if (is_active)
+				//XCEvent.DispatchEvent("COMBO BREAK", null);
+			if(!is_active)
 					handleTouch ();
 		}
 	}
